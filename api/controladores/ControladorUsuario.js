@@ -115,3 +115,43 @@ exports.verificarUserName = async(request, respuesta) => {
         });
     }
 };
+
+// Verifica si el correo ya existe en la db
+exports.verificarCorreo = async(request, respuesta) => {
+    // GET request.
+    const datos = request.body;
+
+    // Verificamos si hay datos en la consulta.
+    if (!datos.correo) {
+        return respuesta.status(400).send({
+            message: "Información incompleta!",
+            correoEncontrado: true,
+        })
+    }
+
+    try {
+        // Verificamos si el username no existe en la base de datos.
+        let existeUsuario = await Usuario.findOne({
+            where: {
+                correo: datos.correo,
+            },
+        });
+
+        // Si es asi, el registro se interrumpe
+        if (existeUsuario) {
+            return respuesta.status(400).json({
+                message: `El correo ${datos.correo} ya existe!`,
+                correoEncontrado: true,
+            })
+        } else {
+            return respuesta.status(400).json({
+                message: '',
+                correoEncontrado: false,
+            })
+        }
+    } catch(excepcion) {
+        return respuesta.status(500).send({
+            message: `Error con la API: ${excepcion}`
+        });
+    }
+};
