@@ -14,6 +14,9 @@ module.exports = (app) => {
     // Verifica si un nombre de usuario ya existe en la db.
     router.get("/verificar/username/", usuario.verificarUserName);
 
+    // Verifica si un correo ya existe en la db.
+    router.get("/verificar/correo/", usuario.verificarCorreo);
+
     // Ruta general de usaurios.
     app.use(process.env.API_URL + "usuario", router);
 };
