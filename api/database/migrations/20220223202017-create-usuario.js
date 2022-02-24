@@ -21,6 +21,10 @@ module.exports = {
         type: Sequelize.BOOLEAN
       },
 
+      password: {
+        type: Sequelize.STRING
+      },
+
       // FK
       idRol: {
         type: Sequelize.INTEGER,
@@ -28,10 +32,10 @@ module.exports = {
         allowNull: false,
         references: {
             model: {
-                tableName: "Rol"
+                tableName: "Roles",
             },
             key: "id",
-        }
+        },
       },
     });
   },

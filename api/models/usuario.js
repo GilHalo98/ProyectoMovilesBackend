@@ -11,7 +11,7 @@ module.exports = (sequelize, DataTypes) => {
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-        Usuario.belongsTo(models.Rol, {foreingKey: 'idRol'})
+        Usuario.belongsTo(models.Rol, {foreignKey: 'idRol'})
     }
   }
 
@@ -19,6 +19,7 @@ module.exports = (sequelize, DataTypes) => {
     nombreUsuario: DataTypes.STRING,
     correo: DataTypes.STRING,
     correoVerificado: DataTypes.BOOLEAN,
+    password: DataTypes.STRING,
 
     // FK
     idRol: DataTypes.INTEGER
