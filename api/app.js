@@ -21,6 +21,7 @@ app.use(bodyParser.urlencoded({extended: false}));
 app.use(cors({origin: "*"}));
 
 // Aqui se agregan las rutas generales.
+require("./routes/UsuarioRoute")(app);
 
 // Respuesta del servidor.
 app.listen(PORT, HOST, (error) => {
