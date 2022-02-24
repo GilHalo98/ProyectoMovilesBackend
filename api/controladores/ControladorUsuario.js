@@ -75,3 +75,43 @@ exports.registrar = async(request, respuesta) => {
         });
     }
 };
+
+// Verifica si un nombre de usuario se encuentra en la db
+exports.verificarUserName = async(request, respuesta) => {
+    // GET request.
+    const datos = request.body;
+
+    // Verificamos si hay datos en la consulta.
+    if (!datos.nombreUsuario) {
+        return respuesta.status(400).send({
+            message: "Información incompleta!",
+            nombreUsuarioEncontrado: true,
+        })
+    }
+
+    try {
+        // Verificamos si el username no existe en la base de datos.
+        let existeUsuario = await Usuario.findOne({
+            where: {
+                nombreUsuario: datos.nombreUsuario,
+            },
+        });
+
+        // Si es asi, el registro se interrumpe
+        if (existeUsuario) {
+            return respuesta.status(400).json({
+                message: `El usuario ${datos.nombreUsuario} ya existe!`,
+                nombreUsuarioEncontrado: true,
+            })
+        } else {
+            return respuesta.status(400).json({
+                message: '',
+                nombreUsuarioEncontrado: false,
+            })
+        }
+    } catch(excepcion) {
+        return respuesta.status(500).send({
+            message: `Error con la API: ${excepcion}`
+        });
+    }
+};
