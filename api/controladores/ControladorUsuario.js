@@ -1,5 +1,6 @@
 // Modelos de la DB
 const db = require("../models/index");
+const { enviarValidacion } = require("../middleware/mailConfig");
 const Usuario = db.Usuario;
 
 // Para encriptar la contraseña
@@ -64,6 +65,8 @@ exports.registrar = async(request, respuesta) => {
 
         // Agregamos la instancia a la DB.
         Usuario.create(usuario).then((resultado) => {
+            enviarValidacion('', '', '');
+
             respuesta.status(201).json({
                 message: "La cuenta fue creada exitosamente!"
             });
