@@ -5,7 +5,6 @@ const Usuario = db.Usuario;
 
 // Para encriptar la contraseña
 const bcrypjs = require("bcryptjs");
-const jwt = require("jsonwebtoken");
 
 // Registra un usuario en la db
 exports.registrar = async(request, respuesta) => {
