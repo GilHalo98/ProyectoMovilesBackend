@@ -12,8 +12,8 @@ const enviarValidacion = async (email, subject, html) => {
     try {
         await transporter.sendMail({
             from: process.env.MAIL_DIR,
-            to: 'diego_gilhalo98@hotmail.com',
-            subject: 'prueba',
+            to: email,
+            subject: subject,
             text: 'prueba',
             html: '<h1>Prueba<h1/>',
         });
