@@ -64,7 +64,7 @@ exports.registrar = async(request, respuesta) => {
 
         // Agregamos la instancia a la DB.
         Usuario.create(usuario).then((resultado) => {
-            enviarValidacion('', '', '');
+            enviarValidacion(datos.correo, 'Registro de Usuario', '');
 
             respuesta.status(201).json({
                 message: "La cuenta fue creada exitosamente!"
