@@ -17,6 +17,10 @@ module.exports = {
         type: Sequelize.STRING
       },
 
+      codigoVerificacion: {
+        type: Sequelize.INTEGER  
+      },
+
       correoVerificado: {
         type: Sequelize.BOOLEAN
       },
