@@ -8,7 +8,7 @@ const template_validacion = (datosUsuario) => {
         <body>
             <h1>Hola ${datosUsuario.nombreUsuario}!</h1>
             <p>Te has registrado en _. Ingresa el código siguiente para poder verificar tu registro</p>
-            <h3>CODIGO</h3>
+            <h3>${datosUsuario.codigoVerificacion}</h3>
         </body>
 
         <footer>

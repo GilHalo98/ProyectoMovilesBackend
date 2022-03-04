@@ -1,6 +1,7 @@
 // Modelos de la DB
 const db = require("../models/index");
 const { enviarValidacion } = require("../middleware/mailConfig");
+const { generar_codigo } = require("../middleware/util");
 const Usuario = db.Usuario;
 
 // Para encriptar la contraseña
@@ -58,6 +59,7 @@ exports.registrar = async(request, respuesta) => {
             nombreUsuario: datos.nombreUsuario,
             password: hash,
             correo: datos.correo,
+            codigoVerificacion: generar_codigo(),
             correoVerificado: false,
             idRol: 1,
         }
