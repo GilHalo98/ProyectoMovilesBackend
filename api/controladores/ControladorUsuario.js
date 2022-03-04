@@ -180,7 +180,7 @@ exports.validarCorreo = async(request, respuesta) => {
         // Si no se encontro el correo, entonces manda un mensaje.
         if (!usuario) {
             return respuesta.status(404).json({
-                message: `El ${datos.correo} no se encuentra registrado!`
+                message: `El correo ${datos.correo} no se encuentra registrado!`
             });
         }
 
@@ -211,6 +211,52 @@ exports.validarCorreo = async(request, respuesta) => {
                 message: 'El codigo ingresado es diferente!'
             });
         }
+
+    } catch(excepcion) {
+        return respuesta.status(500).send({
+            message: `Error con la API: ${excepcion}`
+        });
+    }
+};
+
+// Envia un email al usuario, para validar su correo.
+exports.enviarCorreo = async(request, respuesta) => {
+    // GET Request
+    const datos = request.params;
+
+    try {
+        // Buscamos al usuario al que le pertenece el correo.
+        let usuario = await Usuario.findOne({
+            where: {
+                correo: datos.correo,
+            },
+        });
+
+        // Si no se encontro el correo, entonces manda un mensaje.
+        if (!usuario) {
+            return respuesta.status(404).json({
+                message: `El correo ${datos.correo} no se encuentra registrado!`
+            });
+        }
+
+        // Si el correo ya se encuentra verificado, entonces manda un mensaje.
+        if (usuario.correoVerificado) {
+            return respuesta.status(400).json({
+                message: `El correo ${datos.correo} ya se encuentra validado!`
+            });
+        }
+
+        // Generamos nuevamente el codigo.
+        usuario.codigoVerificacion = generar_codigo();
+
+        // Guardamos el cambio en la DB y enviamos el correo.
+        usuario.save().then((resultado) => {
+            enviarValidacion(
+                usuario,
+                'Confirmación de Correo Electronico',
+                ''
+            );
+        });
 
     } catch(excepcion) {
         return respuesta.status(500).send({
