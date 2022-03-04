@@ -169,7 +169,6 @@ exports.validarCorreo = async(request, respuesta) => {
     // GET Request
     const datos = request.params;
 
-
     try {
         // Buscamos al usuario al que le pertenece el correo.
         let usuario = await Usuario.findOne({
@@ -182,6 +181,13 @@ exports.validarCorreo = async(request, respuesta) => {
         if (!usuario) {
             return respuesta.status(404).json({
                 message: `El ${datos.correo} no se encuentra registrado!`
+            });
+        }
+
+        // Si el correo ya se encuentra verificado, entonces manda un mensaje.
+        if (usuario.correoVerificado) {
+            return respuesta.status(400).json({
+                message: `El ${datos.correo} ya se encuentra validado!`
             });
         }
 
