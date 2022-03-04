@@ -1,4 +1,5 @@
 const nodemailer = require("nodemailer");
+const { template_validacion } = require("../template/validacion");
 
 var transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -15,7 +16,7 @@ const enviarValidacion = async (email, subject, html) => {
             to: email,
             subject: subject,
             text: 'prueba',
-            html: '<h1>Prueba<h1/>',
+            html: template_validacion(),
         });
     } catch(error) {
         console.log('El email no fue enviado', error);
