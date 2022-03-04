@@ -9,14 +9,14 @@ var transporter = nodemailer.createTransport({
     }
 });
 
-const enviarValidacion = async (email, subject, html) => {
+const enviarValidacion = async (datosUsuario, subject, html) => {
     try {
         await transporter.sendMail({
             from: process.env.MAIL_DIR,
-            to: email,
+            to: datosUsuario.correo,
             subject: subject,
             text: 'prueba',
-            html: template_validacion(),
+            html: template_validacion(datosUsuario),
         });
     } catch(error) {
         console.log('El email no fue enviado', error);
