@@ -17,6 +17,9 @@ module.exports = (app) => {
     // Verifica si un correo ya existe en la db.
     router.get("/verificar/correo/", usuario.verificarCorreo);
 
+    // Valida un correo electronico.
+    route.get("/validar/:correo/:codigo", usuario.validarCorreo);
+
     // Ruta general de usaurios.
     app.use(process.env.API_URL + "usuario", router);
 };
