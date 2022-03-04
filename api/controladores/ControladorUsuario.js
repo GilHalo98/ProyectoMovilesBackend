@@ -163,3 +163,10 @@ exports.verificarCorreo = async(request, respuesta) => {
         });
     }
 };
+
+// Valida el codigo de verificacion de un correo electronico
+exports.validarCorreo = async(request, respuesta) => {
+    const datos = request;
+
+    console.log(datos);
+};
