@@ -10,6 +10,7 @@ Usuario
 idUsuario PK
 nombreUsuario str UNIQUE
 correo str UNIQUE
+codigoVerificacion int
 correoVerificado bool
 idRol FK >- Rol.idRol
 idPreferencias FK - Preferencia.idPreferencia
