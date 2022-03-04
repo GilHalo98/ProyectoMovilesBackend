@@ -256,6 +256,11 @@ exports.enviarCorreo = async(request, respuesta) => {
                 'Confirmación de Correo Electronico',
                 ''
             );
+
+            // Se manda un mensaje de confirmado
+            respuesta.status(201).json({
+                message: `El codigo fue enviado a ${datos.correo}!`
+            });
         });
 
     } catch(excepcion) {
