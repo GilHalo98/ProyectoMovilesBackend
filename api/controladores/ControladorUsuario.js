@@ -187,7 +187,7 @@ exports.validarCorreo = async(request, respuesta) => {
         // Si el correo ya se encuentra verificado, entonces manda un mensaje.
         if (usuario.correoVerificado) {
             return respuesta.status(400).json({
-                message: `El ${datos.correo} ya se encuentra validado!`
+                message: `El correo ${datos.correo} ya se encuentra validado!`
             });
         }
 
