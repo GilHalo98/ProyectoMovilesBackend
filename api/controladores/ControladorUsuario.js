@@ -166,7 +166,49 @@ exports.verificarCorreo = async(request, respuesta) => {
 
 // Valida el codigo de verificacion de un correo electronico
 exports.validarCorreo = async(request, respuesta) => {
-    const datos = request;
+    // GET Request
+    const datos = request.params;
 
-    console.log(datos);
+
+    try {
+        // Buscamos al usuario al que le pertenece el correo.
+        let usuario = await Usuario.findOne({
+            where: {
+                correo: datos.correo,
+            },
+        });
+
+        // Si no se encontro el correo, entonces manda un mensaje.
+        if (!usuario) {
+            return respuesta.status(404).json({
+                message: `El ${datos.correo} no se encuentra registrado!`
+            });
+        }
+
+        // Si se encuentra un usuario, entonces compara los codigos.
+        if (datos.codigo === usuario.codigoVerificacion) {
+            // Si los codigos son iguales, entones se valida el correo.
+            usuario.correoVerificado = true;
+
+            // Se guardan los cambios.
+            usuario.save().then((resultado) => {
+
+                // Se manda un mensaje de confirmado
+                respuesta.status(201).json({
+                    message: `El correo ${datos.correo} fue validado exitosamente!`
+                });
+            });
+
+        } else {
+            // De lo contrario, envia un mensaje.
+            return respuesta.status(400).json({
+                message: 'El codigo ingresado es diferente!'
+            });
+        }
+
+    } catch(excepcion) {
+        return respuesta.status(500).send({
+            message: `Error con la API: ${excepcion}`
+        });
+    }
 };
