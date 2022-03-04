@@ -192,7 +192,7 @@ exports.validarCorreo = async(request, respuesta) => {
         }
 
         // Si se encuentra un usuario, entonces compara los codigos.
-        if (datos.codigo === usuario.codigoVerificacion) {
+        if (parseInt(datos.codigo) === parseInt(usuario.codigoVerificacion)) {
             // Si los codigos son iguales, entones se valida el correo.
             usuario.correoVerificado = true;
 
