@@ -269,3 +269,58 @@ exports.enviarCorreo = async(request, respuesta) => {
         });
     }
 };
+
+// Endpoint para Log-In.
+exports.login = async(request, respuesta) => {
+    // GET Request
+    const datos = request.body;
+
+    // Verificamos si hay datos en la consulta.
+    if (!datos.correo || !datos.password) {
+        return respuesta.status(400).send({
+            message: "Información incompleta para el inicio de sesión!",
+            correoEncontrado: true,
+        })
+    }
+
+    try {
+        // Buscamos al usuario al que le pertenece el correo.
+        let usuario = await Usuario.findOne({
+            where: {
+                correo: datos.correo,
+            },
+        });
+
+        // Si no se encontro el usuario, entonces manda un mensaje.
+        if (!usuario) {
+            return respuesta.status(404).json({
+                message: `El correo ${datos.correo} no se encuentra registrado!`
+            });
+        }
+
+        // Checamos que el correo ya este validado.
+        if (!usuario.correoVerificado) {
+            return respuesta.status(500).json({
+                message: `El correo ${datos.correo} no se encuentra validado!`
+            });
+        }
+
+        // Verificamos la contraseña.
+        bcrypjs.compare(datos.password, usuario.password, function(error, igual) {
+            if (igual) {
+                return respuesta.status(200).json({
+                  message: "Autenticación exitosa!",
+                });
+            } else {
+                return respuesta.status(500).json({
+                    message: 'Contraseña incorrecta'
+                });
+            }
+        });
+
+    } catch(excepcion) {
+        return respuesta.status(500).send({
+            message: `Error con la API: ${excepcion}`
+        });
+    }
+};
