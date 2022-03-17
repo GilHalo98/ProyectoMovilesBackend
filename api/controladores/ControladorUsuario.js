@@ -272,14 +272,14 @@ exports.enviarCorreo = async(request, respuesta) => {
 
 // Endpoint para Log-In.
 exports.login = async(request, respuesta) => {
-    // GET Request
+    // POST Request
     const datos = request.body;
 
     // Verificamos si hay datos en la consulta.
     if (!datos.correo || !datos.password) {
         return respuesta.status(400).send({
             message: "Información incompleta para el inicio de sesión!",
-            correoEncontrado: true,
+            codigo_interno: 0,
         })
     }
 
@@ -294,14 +294,16 @@ exports.login = async(request, respuesta) => {
         // Si no se encontro el usuario, entonces manda un mensaje.
         if (!usuario) {
             return respuesta.status(404).json({
-                message: `El correo ${datos.correo} no se encuentra registrado!`
+                message: `El correo ${datos.correo} no se encuentra registrado!`,
+                codigo_interno: 1,
             });
         }
 
         // Checamos que el correo ya este validado.
         if (!usuario.correoVerificado) {
             return respuesta.status(500).json({
-                message: `El correo ${datos.correo} no se encuentra validado!`
+                message: `El correo ${datos.correo} no se encuentra validado!`,
+                codigo_interno: 2,
             });
         }
 
@@ -311,16 +313,19 @@ exports.login = async(request, respuesta) => {
                 return respuesta.status(200).json({
                   message: "Autenticación exitosa!",
                 });
+
             } else {
                 return respuesta.status(500).json({
-                    message: 'Contraseña incorrecta'
+                    message: 'Contraseña incorrecta',
+                    codigo_interno: 3,
                 });
             }
         });
 
     } catch(excepcion) {
         return respuesta.status(500).send({
-            message: `Error con la API: ${excepcion}`
+            message: `Error con la API: ${excepcion}`,
+            codigo_interno: -1,
         });
     }
 };
