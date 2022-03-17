@@ -24,7 +24,7 @@ module.exports = (app) => {
     router.get("/validar/:correo", usuario.enviarCorreo);
 
     // Hace el login.
-    router.get("/login/", usuario.login);
+    router.post("/login/", usuario.login);
 
     // Ruta general de usaurios.
     app.use(process.env.API_URL + "usuario", router);
