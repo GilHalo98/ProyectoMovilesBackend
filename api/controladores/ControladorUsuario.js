@@ -279,7 +279,8 @@ exports.login = async(request, respuesta) => {
     if (!datos.correo || !datos.password) {
         return respuesta.status(400).send({
             message: "Información incompleta para el inicio de sesión!",
-            codigo_interno: 0,
+            codigo_interno: 1,
+            userData: {},
         })
     }
 
@@ -295,7 +296,8 @@ exports.login = async(request, respuesta) => {
         if (!usuario) {
             return respuesta.status(404).json({
                 message: `El correo ${datos.correo} no se encuentra registrado!`,
-                codigo_interno: 1,
+                codigo_interno: 2,
+                userData: {},
             });
         }
 
@@ -303,7 +305,8 @@ exports.login = async(request, respuesta) => {
         if (!usuario.correoVerificado) {
             return respuesta.status(500).json({
                 message: `El correo ${datos.correo} no se encuentra validado!`,
-                codigo_interno: 2,
+                codigo_interno: 3,
+                userData: {},
             });
         }
 
@@ -311,13 +314,20 @@ exports.login = async(request, respuesta) => {
         bcrypjs.compare(datos.password, usuario.password, function(error, igual) {
             if (igual) {
                 return respuesta.status(200).json({
-                  message: "Autenticación exitosa!",
+                    message: "Autenticación exitosa!",
+                    codigo_interno: 0,
+                    userData: {
+                        'nombreUsuario': usuario.nombreUsuario,
+                        'correo': usuario.correo,
+                        'rol': usuario.idRol,
+                    },
                 });
 
             } else {
                 return respuesta.status(500).json({
                     message: 'Contraseña incorrecta',
-                    codigo_interno: 3,
+                    codigo_interno: 4,
+                    userData: {},
                 });
             }
         });
@@ -326,6 +336,7 @@ exports.login = async(request, respuesta) => {
         return respuesta.status(500).send({
             message: `Error con la API: ${excepcion}`,
             codigo_interno: -1,
+            userData: {},
         });
     }
 };
