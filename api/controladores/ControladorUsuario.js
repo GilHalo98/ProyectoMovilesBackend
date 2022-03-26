@@ -3,6 +3,8 @@ const db = require("../models/index");
 const { enviarValidacion } = require("../middleware/mailConfig");
 const { generar_codigo } = require("../middleware/util");
 const Usuario = db.Usuario;
+const Preferencia = db.Preferencia;
+const Rol = db.Rol;
 
 // Para encriptar la contraseña
 const bcrypjs = require("bcryptjs");
@@ -37,7 +39,7 @@ exports.registrar = async(request, respuesta) => {
         // Verificamos si el correo no existe en la base de datos.
         existeUsuario = await Usuario.findOne({
             where: {
-                correo: datos.correo
+                correo: datos.correo,
             },
         });
 
@@ -48,33 +50,61 @@ exports.registrar = async(request, respuesta) => {
             })
         }
 
-        // Realizamos una key para el encriptado.
-        const salt = bcrypjs.genSaltSync(10);
+        // Se busca la preferencia por default.
+        let preferenciaDefault = await Preferencia.findOne({
+            where: {
+                id: 1,
+            },
+        });
 
-        // Encriptamos la contraseña.
-        const hash = bcrypjs.hashSync(datos.password, salt);
-
-        // Generamos una instancia de la clase Usuario.
-        const usuario = {
-            nombreUsuario: datos.nombreUsuario,
-            password: hash,
-            correo: datos.correo,
-            codigoVerificacion: generar_codigo(),
-            correoVerificado: false,
-            idRol: 1,
+        // Si no existe la configuracion por defautl, se interrumpe el proceso.
+        if (!preferenciaDefault) {
+            return respuesta.status(404).json({
+                message: "Configuracion por default no existe!"
+            })
         }
 
-        // Agregamos la instancia a la DB.
-        Usuario.create(usuario).then((resultado) => {
-            enviarValidacion(
-                usuario,
-                'Confirmación de Correo Electronico',
-                ''
-            );
+        // Se crea una nueva preferencia a partir de la default.
+        const preferencias = {
+            'idioma': preferenciaDefault.idioma,
+            'pais': preferenciaDefault.pais,
+            'estadoPerfil': preferenciaDefault.estadoPerfil,
+        }
 
-            respuesta.status(201).json({
-                message: "La cuenta fue creada exitosamente!"
+        // Despues se registra la preferencia en la db.
+        Preferencia.create(preferencias).then((resultado) => {
+            // Una vez realizado el registro, se registra el usuario.
+
+            // Realizamos una key para el encriptado.
+            const salt = bcrypjs.genSaltSync(10);
+
+            // Encriptamos la contraseña.
+            const hash = bcrypjs.hashSync(datos.password, salt);
+
+            // Generamos una instancia de la clase Usuario.
+            const usuario = {
+                nombreUsuario: datos.nombreUsuario,
+                password: hash,
+                correo: datos.correo,
+                codigoVerificacion: generar_codigo(),
+                correoVerificado: false,
+                idRol: datos.rol,
+                idPreferencia: resultado.id,
+            }
+
+            // Agregamos la instancia a la DB.
+            Usuario.create(usuario).then((resultado) => {
+                enviarValidacion(
+                    usuario,
+                    'Confirmación de Correo Electronico',
+                    ''
+                );
+
+                respuesta.status(201).json({
+                    message: "La cuenta fue creada exitosamente!"
+                });
             });
+
         });
 
     } catch(excepcion) {
@@ -219,6 +249,110 @@ exports.validarCorreo = async(request, respuesta) => {
     }
 };
 
+// Valida el codigo de verificacion de un correo e inicia sesion
+exports.validarCorreoLogin = async(request, respuesta) => {
+    // GET Request
+    const datos = request.params;
+
+    try {
+        // Buscamos al usuario al que le pertenece el correo.
+        let usuario = await Usuario.findOne({
+            where: {
+                correo: datos.correo,
+            },
+        });
+
+        // Si no se encontro el correo, entonces manda un mensaje.
+        if (!usuario) {
+            return respuesta.status(404).json({
+                message: `El correo ${datos.correo} no se encuentra registrado!`,
+                codigo_interno: 5,
+                userData: {},
+            });
+        }
+
+        // Si el correo ya se encuentra verificado, entonces manda un mensaje.
+        if (usuario.correoVerificado) {
+            return respuesta.status(400).json({
+                message: `El correo ${datos.correo} ya se encuentra validado!`,
+                codigo_interno: 6,
+                userData: {},
+            });
+        }
+
+        // Buscamos el rol al que pertenece el usuario.
+        let rol = await Rol.findOne({
+            where: {
+                id: usuario.idRol,
+            },
+        });
+
+        // Si el usuario no tiene asignado un rol.
+        if (!rol) {
+            return respuesta.status(404).json({
+                message: "El usuario no tiene un rol!"
+            })
+        }
+
+        // Buscamos las preferencias del usaurio.
+        let preferencia = await Preferencia.findOne({
+            where: {
+                id: usuario.idPreferencia,
+            },
+        });
+
+        // Si el usuario no tiene configurado las preferencias.
+        if (!preferencia) {
+            return respuesta.status(404).json({
+                message: "Configuracion del usuario no existe!"
+            })
+        }
+
+        // Si se encuentra un usuario, entonces compara los codigos.
+        if (parseInt(datos.codigo) === parseInt(usuario.codigoVerificacion)) {
+            // Si los codigos son iguales, entones se valida el correo.
+            usuario.correoVerificado = true;
+
+            // Se guardan los cambios.
+            usuario.save().then((resultado) => {
+                // Se manda un mensaje de confirmado
+                respuesta.status(201).json({
+                    message: `El correo ${datos.correo} fue validado exitosamente!`,
+                    codigo_interno: 0,
+                    userData: {
+                        'nombreUsuario': usuario.nombreUsuario,
+                        'correo': usuario.correo,
+                        'rol': {
+                            'nombre': rol.nombreRol,
+                            'descripcion': rol.descripcion,
+                        },
+                        'preferencias': {
+                            'idioma': preferencia.idioma,
+                            'pais': preferencia.pais,
+                            'estadoPerfil': preferencia.estadoPerfil
+                        }
+                    },
+                });
+            });
+
+        } else {
+            // De lo contrario, envia un mensaje.
+            return respuesta.status(400).json({
+                message: 'El codigo ingresado es diferente!',
+                codigo_interno: -1,
+                userData: {},
+            });
+        }
+
+    } catch(excepcion) {
+        return respuesta.status(500).send({
+            message: `Error con la API: ${excepcion}`,
+            codigo_interno: -1,
+            userData: {},
+        });
+    }
+}
+
 // Envia un email al usuario, para validar su correo.
 exports.enviarCorreo = async(request, respuesta) => {
     // GET Request
@@ -310,16 +444,52 @@ exports.login = async(request, respuesta) => {
             });
         }
 
+        // Buscamos el rol al que pertenece el usuario.
+        let rol = await Rol.findOne({
+            where: {
+                id: usuario.idRol,
+            },
+        });
+
+        // Si el usuario no tiene asignado un rol.
+        if (!rol) {
+            return respuesta.status(404).json({
+                message: "El usuario no tiene un rol!"
+            })
+        }
+
+        // Buscamos las preferencias del usaurio.
+        let preferencia = await Preferencia.findOne({
+            where: {
+                id: usuario.idPreferencia,
+            },
+        });
+
+        // Si el usuario no tiene configurado las preferencias.
+        if (!preferencia) {
+            return respuesta.status(404).json({
+                message: "Configuracion del usuario no existe!"
+            })
+        }
+
         // Verificamos la contraseña.
         bcrypjs.compare(datos.password, usuario.password, function(error, igual) {
             if (igual) {
-                return respuesta.status(200).json({
-                    message: "Autenticación exitosa!",
+                respuesta.status(201).json({
+                    message: `Bienvenido ${usuario.nombreUsuario}!`,
                     codigo_interno: 0,
                     userData: {
                         'nombreUsuario': usuario.nombreUsuario,
                         'correo': usuario.correo,
-                        'rol': usuario.idRol,
+                        'rol': {
+                            'nombre': rol.nombreRol,
+                            'descripcion': rol.descripcion,
+                        },
+                        'preferencias': {
+                            'idioma': preferencia.idioma,
+                            'pais': preferencia.pais,
+                            'estadoPerfil': preferencia.estadoPerfil
+                        }
                     },
                 });
 
