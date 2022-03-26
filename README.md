@@ -7,22 +7,26 @@ https://app.quickdatabasediagrams.com/#/
 
 Usuario
 ---
-idUsuario PK
-nombreUsuario str UNIQUE
-correo str UNIQUE
-codigoVerificacion int
-correoVerificado bool
-idRol FK >- Rol.idRol
-idPreferencias FK - Preferencia.idPreferencia
+idUsuario PK  # ID del usuario
+nombreUsuario str UNIQUE  # Nombre del usuario
+correo str UNIQUE  # Correo Electronico del usuario
+codigoVerificacion int  # Codigo de verificacion de correo
+correoVerificado bool  # Indica si el correo esta verificado
+idRol FK >- Rol.idRol  # Rol asignado al usuario
+idPreferencias FK - Preferencia.idPreferencia  # Preferencias del usuario.
 
 Rol
 ---
-idRol PK
-descripcionRol str
+idRol PK  # ID del rol
+nombreRol str  # Nombre del rol
+descripcionRol str  # Descripcion del rol
 
 Preferencia
 ---
-idPreferencia PK
+idPreferencia PK  # ID de preferencia
+idioma str  # Idioma de la interfaz.
+pais str  # Pais del usuario
+estadoPerfil str  # Estado del perfil, un texto descriptivo
 
 ---
 
