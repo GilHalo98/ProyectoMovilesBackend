@@ -20,6 +20,9 @@ module.exports = (app) => {
     // Valida un correo electronico.
     router.get("/validar/:correo/:codigo", usuario.validarCorreo);
 
+    // Valida un correo e inicia sesion.
+    router.get("/validar/login/:correo/:codigo", usuario.validarCorreoLogin);
+
     // Envia un correo para validar el email.
     router.get("/validar/:correo", usuario.enviarCorreo);
 
