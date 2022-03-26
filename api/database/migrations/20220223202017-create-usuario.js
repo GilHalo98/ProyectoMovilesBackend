@@ -41,6 +41,18 @@ module.exports = {
             key: "id",
         },
       },
+
+      idPreferencia: {
+        type: Sequelize.INTEGER,
+        required: true,
+        allowNull: false,
+        references: {
+            model: {
+                tableName: "Preferencias",
+            },
+            key: "id",
+        },
+      },
     });
   },
   async down(queryInterface, Sequelize) {
