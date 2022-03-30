@@ -21,7 +21,7 @@ module.exports = (app) => {
     router.post("/login/", usuario.login);
 
     // Envia los datos de un usuario dado.
-    router.post("/datos/", usuario.datosUsuario);
+    router.get("/datos/", usuario.datosUsuario);
 
     // Para hacer pruebas con tokens
     router.post("/unpackToken/", usuario.unpackToken);

@@ -325,8 +325,7 @@ exports.unpackToken = async(request, respuesta) => {
 
 // Realiza peticiones de preferencias del usuario. Es necesario un token.
 exports.datosUsuario = async(request, respuesta) => {
-    // POST Request.
-    const datos = request.body;
+    // GET Request.
     const headers = request.headers;
 
     try {
