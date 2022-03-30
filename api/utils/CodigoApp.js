@@ -20,6 +20,7 @@ class CodigoApp {
     CODIGO_REENVIADO_OK = 14;
 
     USUARIO_NO_REGISTRADO = 15;
+    DATOS_USUARIO_OK = 16;
 }
 
 module.exports = {

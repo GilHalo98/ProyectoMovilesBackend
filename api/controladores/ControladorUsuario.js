@@ -359,6 +359,7 @@ exports.datosUsuario = async(request, respuesta) => {
         }
 
         respuesta.status(201).json({
+            codigo_respuesta: CODIGOS.DATOS_USUARIO_OK,
             usuario,
             preferencia,
         });
