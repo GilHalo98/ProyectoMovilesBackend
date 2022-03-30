@@ -1,13 +1,22 @@
 // Modelos de la DB
 const db = require("../models/index");
+const Respuestas = require("../utils/CodigoApp")
+
+const { getToken, getTokenData } = require("../middleware/jwtConfig")
 const { enviarValidacion } = require("../middleware/mailConfig");
 const { generar_codigo } = require("../middleware/util");
+
 const Usuario = db.Usuario;
 const Preferencia = db.Preferencia;
 const Rol = db.Rol;
 
+const CODIGOS = new Respuestas.CodigoApp()
+
 // Para encriptar la contraseña
 const bcrypjs = require("bcryptjs");
+
+// Para generar tokens.
+const jwt = require('jsonwebtoken');
 
 // Registra un usuario en la db
 exports.registrar = async(request, respuesta) => {
@@ -17,8 +26,8 @@ exports.registrar = async(request, respuesta) => {
     // Verifica si los datos basicos para el registro no son nulos.
     if (!datos.nombreUsuario || !datos.correo || !datos.password) {
         return respuesta.status(400).send({
-            message: "Información incompleta para el registro!",
-        })
+            codigo_respuesta: CODIGOS.INFORMACION_INCOMPLETA,
+        });
     }
 
     try {
@@ -32,8 +41,8 @@ exports.registrar = async(request, respuesta) => {
         // Si es asi, el registro se interrumpe
         if (existeUsuario) {
             return respuesta.status(400).json({
-                message: `El usuario ${datos.nombreUsuario} ya existe!`
-            })
+                codigo_respuesta: CODIGOS.NOMBRE_USUARIO_REGISTRADO,
+            });
         }
 
         // Verificamos si el correo no existe en la base de datos.
@@ -46,8 +55,8 @@ exports.registrar = async(request, respuesta) => {
         // Si es asi, el registro se interrumpe
         if (existeUsuario) {
             return respuesta.status(400).json({
-                message: `El correo ${datos.correo} ya existe!`
-            })
+                codigo_respuesta: CODIGOS.CORREO_REGISTRADO,
+            });
         }
 
         // Se busca la preferencia por default.
@@ -60,8 +69,8 @@ exports.registrar = async(request, respuesta) => {
         // Si no existe la configuracion por defautl, se interrumpe el proceso.
         if (!preferenciaDefault) {
             return respuesta.status(404).json({
-                message: "Configuracion por default no existe!"
-            })
+                codigo_respuesta: CODIGOS.CONFIGURACION_DEFAULT_INEXISTENTE,
+            });
         }
 
         // Se crea una nueva preferencia a partir de la default.
@@ -101,7 +110,7 @@ exports.registrar = async(request, respuesta) => {
                 );
 
                 respuesta.status(201).json({
-                    message: "La cuenta fue creada exitosamente!"
+                    codigo_respuesta: CODIGOS.REGISTRO_OK,
                 });
             });
 
@@ -109,87 +118,7 @@ exports.registrar = async(request, respuesta) => {
 
     } catch(excepcion) {
         return respuesta.status(500).send({
-            message: `Error con la API: ${excepcion}`
-        });
-    }
-};
-
-// Verifica si un nombre de usuario se encuentra en la db
-exports.verificarUserName = async(request, respuesta) => {
-    // GET request.
-    const datos = request.body;
-
-    // Verificamos si hay datos en la consulta.
-    if (!datos.nombreUsuario) {
-        return respuesta.status(400).send({
-            message: "Información incompleta!",
-            nombreUsuarioEncontrado: true,
-        })
-    }
-
-    try {
-        // Verificamos si el username no existe en la base de datos.
-        let existeUsuario = await Usuario.findOne({
-            where: {
-                nombreUsuario: datos.nombreUsuario,
-            },
-        });
-
-        // Si es asi, el registro se interrumpe
-        if (existeUsuario) {
-            return respuesta.status(400).json({
-                message: `El usuario ${datos.nombreUsuario} ya existe!`,
-                nombreUsuarioEncontrado: true,
-            })
-        } else {
-            return respuesta.status(400).json({
-                message: '',
-                nombreUsuarioEncontrado: false,
-            })
-        }
-    } catch(excepcion) {
-        return respuesta.status(500).send({
-            message: `Error con la API: ${excepcion}`
-        });
-    }
-};
-
-// Verifica si el correo ya existe en la db
-exports.verificarCorreo = async(request, respuesta) => {
-    // GET request.
-    const datos = request.body;
-
-    // Verificamos si hay datos en la consulta.
-    if (!datos.correo) {
-        return respuesta.status(400).send({
-            message: "Información incompleta!",
-            correoEncontrado: true,
-        })
-    }
-
-    try {
-        // Verificamos si el username no existe en la base de datos.
-        let existeUsuario = await Usuario.findOne({
-            where: {
-                correo: datos.correo,
-            },
-        });
-
-        // Si es asi, el registro se interrumpe
-        if (existeUsuario) {
-            return respuesta.status(400).json({
-                message: `El correo ${datos.correo} ya existe!`,
-                correoEncontrado: true,
-            })
-        } else {
-            return respuesta.status(400).json({
-                message: '',
-                correoEncontrado: false,
-            })
-        }
-    } catch(excepcion) {
-        return respuesta.status(500).send({
-            message: `Error con la API: ${excepcion}`
+            codigo_respuesta: CODIGOS.API_ERROR,
         });
     }
 };
@@ -210,14 +139,14 @@ exports.validarCorreo = async(request, respuesta) => {
         // Si no se encontro el correo, entonces manda un mensaje.
         if (!usuario) {
             return respuesta.status(404).json({
-                message: `El correo ${datos.correo} no se encuentra registrado!`
+                codigo_respuesta: CODIGOS.CORREO_NO_ENCONTRADO,
             });
         }
 
         // Si el correo ya se encuentra verificado, entonces manda un mensaje.
         if (usuario.correoVerificado) {
             return respuesta.status(400).json({
-                message: `El correo ${datos.correo} ya se encuentra validado!`
+                codigo_respuesta: CODIGOS.CUENTA_YA_VALIDADA,
             });
         }
 
@@ -226,138 +155,45 @@ exports.validarCorreo = async(request, respuesta) => {
             // Si los codigos son iguales, entones se valida el correo.
             usuario.correoVerificado = true;
 
+            if (datos.isLogin === 'true' || datos.isLogin === '1') {
+                respuesta.setHeader(
+                    'token',
+                    getToken({
+                        'usuario': usuario.id,
+                        'rol': usuario.idRol,
+                        'preferencia': usuario.idPreferencia
+                    })
+                );
+            }
+
             // Se guardan los cambios.
             usuario.save().then((resultado) => {
-
-                // Se manda un mensaje de confirmado
                 respuesta.status(201).json({
-                    message: `El correo ${datos.correo} fue validado exitosamente!`
+                    codigo_respuesta: CODIGOS.VALIDACION_OK,
                 });
             });
 
         } else {
             // De lo contrario, envia un mensaje.
             return respuesta.status(400).json({
-                message: 'El codigo ingresado es diferente!'
+                codigo_respuesta: CODIGOS.CODIGO_DISTITO,
             });
         }
 
     } catch(excepcion) {
         return respuesta.status(500).send({
-            message: `Error con la API: ${excepcion}`
+            codigo_respuesta: CODIGOS.API_ERROR,
         });
     }
 };
-
-// Valida el codigo de verificacion de un correo e inicia sesion
-exports.validarCorreoLogin = async(request, respuesta) => {
-    // GET Request
-    const datos = request.params;
-
-    try {
-        // Buscamos al usuario al que le pertenece el correo.
-        let usuario = await Usuario.findOne({
-            where: {
-                correo: datos.correo,
-            },
-        });
-
-        // Si no se encontro el correo, entonces manda un mensaje.
-        if (!usuario) {
-            return respuesta.status(404).json({
-                message: `El correo ${datos.correo} no se encuentra registrado!`,
-                codigo_interno: 5,
-                userData: {},
-            });
-        }
-
-        // Si el correo ya se encuentra verificado, entonces manda un mensaje.
-        if (usuario.correoVerificado) {
-            return respuesta.status(400).json({
-                message: `El correo ${datos.correo} ya se encuentra validado!`,
-                codigo_interno: 6,
-                userData: {},
-            });
-        }
-
-        // Buscamos el rol al que pertenece el usuario.
-        let rol = await Rol.findOne({
-            where: {
-                id: usuario.idRol,
-            },
-        });
-
-        // Si el usuario no tiene asignado un rol.
-        if (!rol) {
-            return respuesta.status(404).json({
-                message: "El usuario no tiene un rol!"
-            })
-        }
-
-        // Buscamos las preferencias del usaurio.
-        let preferencia = await Preferencia.findOne({
-            where: {
-                id: usuario.idPreferencia,
-            },
-        });
-
-        // Si el usuario no tiene configurado las preferencias.
-        if (!preferencia) {
-            return respuesta.status(404).json({
-                message: "Configuracion del usuario no existe!"
-            })
-        }
-
-        // Si se encuentra un usuario, entonces compara los codigos.
-        if (parseInt(datos.codigo) === parseInt(usuario.codigoVerificacion)) {
-            // Si los codigos son iguales, entones se valida el correo.
-            usuario.correoVerificado = true;
-
-            // Se guardan los cambios.
-            usuario.save().then((resultado) => {
-                // Se manda un mensaje de confirmado
-                respuesta.status(201).json({
-                    message: `El correo ${datos.correo} fue validado exitosamente!`,
-                    codigo_interno: 0,
-                    userData: {
-                        'nombreUsuario': usuario.nombreUsuario,
-                        'correo': usuario.correo,
-                        'rol': {
-                            'nombre': rol.nombreRol,
-                            'descripcion': rol.descripcion,
-                        },
-                        'preferencias': {
-                            'idioma': preferencia.idioma,
-                            'pais': preferencia.pais,
-                            'estadoPerfil': preferencia.estadoPerfil
-                        }
-                    },
-                });
-            });
-
-        } else {
-            // De lo contrario, envia un mensaje.
-            return respuesta.status(400).json({
-                message: 'El codigo ingresado es diferente!',
-                codigo_interno: -1,
-                userData: {},
-            });
-        }
-
-    } catch(excepcion) {
-        return respuesta.status(500).send({
-            message: `Error con la API: ${excepcion}`,
-            codigo_interno: -1,
-            userData: {},
-        });
-    }
-}
 
 // Envia un email al usuario, para validar su correo.
 exports.enviarCorreo = async(request, respuesta) => {
     // GET Request
     const datos = request.params;
 
+    console.log(datos.correo);
+
     try {
         // Buscamos al usuario al que le pertenece el correo.
         let usuario = await Usuario.findOne({
@@ -369,14 +205,14 @@ exports.enviarCorreo = async(request, respuesta) => {
         // Si no se encontro el correo, entonces manda un mensaje.
         if (!usuario) {
             return respuesta.status(404).json({
-                message: `El correo ${datos.correo} no se encuentra registrado!`
+                codigo_respuesta: CODIGOS.CORREO_NO_ENCONTRADO,
             });
         }
 
         // Si el correo ya se encuentra verificado, entonces manda un mensaje.
         if (usuario.correoVerificado) {
             return respuesta.status(400).json({
-                message: `El correo ${datos.correo} ya se encuentra validado!`
+                codigo_respuesta: CODIGOS.CUENTA_YA_VALIDADA,
             });
         }
 
@@ -393,13 +229,13 @@ exports.enviarCorreo = async(request, respuesta) => {
 
             // Se manda un mensaje de confirmado
             respuesta.status(201).json({
-                message: `El codigo fue enviado a ${datos.correo}!`
+                codigo_respuesta: CODIGOS.CODIGO_REENVIADO_OK,
             });
         });
 
     } catch(excepcion) {
         return respuesta.status(500).send({
-            message: `Error con la API: ${excepcion}`
+            codigo_respuesta: CODIGOS.API_ERROR,
         });
     }
 };
@@ -412,10 +248,8 @@ exports.login = async(request, respuesta) => {
     // Verificamos si hay datos en la consulta.
     if (!datos.correo || !datos.password) {
         return respuesta.status(400).send({
-            message: "Información incompleta para el inicio de sesión!",
-            codigo_interno: 1,
-            userData: {},
-        })
+            codigo_respuesta: CODIGOS.INFORMACION_INCOMPLETA,
+        });
     }
 
     try {
@@ -429,84 +263,110 @@ exports.login = async(request, respuesta) => {
         // Si no se encontro el usuario, entonces manda un mensaje.
         if (!usuario) {
             return respuesta.status(404).json({
-                message: `El correo ${datos.correo} no se encuentra registrado!`,
-                codigo_interno: 2,
-                userData: {},
+                codigo_respuesta: CODIGOS.CORREO_NO_ENCONTRADO,
             });
         }
 
         // Checamos que el correo ya este validado.
         if (!usuario.correoVerificado) {
             return respuesta.status(500).json({
-                message: `El correo ${datos.correo} no se encuentra validado!`,
-                codigo_interno: 3,
-                userData: {},
+                codigo_respuesta: CODIGOS.CORREO_NO_VALIDADO,
             });
-        }
-
-        // Buscamos el rol al que pertenece el usuario.
-        let rol = await Rol.findOne({
-            where: {
-                id: usuario.idRol,
-            },
-        });
-
-        // Si el usuario no tiene asignado un rol.
-        if (!rol) {
-            return respuesta.status(404).json({
-                message: "El usuario no tiene un rol!"
-            })
-        }
-
-        // Buscamos las preferencias del usaurio.
-        let preferencia = await Preferencia.findOne({
-            where: {
-                id: usuario.idPreferencia,
-            },
-        });
-
-        // Si el usuario no tiene configurado las preferencias.
-        if (!preferencia) {
-            return respuesta.status(404).json({
-                message: "Configuracion del usuario no existe!"
-            })
         }
 
         // Verificamos la contraseña.
         bcrypjs.compare(datos.password, usuario.password, function(error, igual) {
             if (igual) {
+                respuesta.setHeader(
+                    'token',
+                    getToken({
+                        'usuario': usuario.id,
+                        'rol': usuario.idRol,
+                        'preferencia': usuario.idPreferencia
+                    })
+                );
+
                 respuesta.status(201).json({
-                    message: `Bienvenido ${usuario.nombreUsuario}!`,
-                    codigo_interno: 0,
-                    userData: {
-                        'nombreUsuario': usuario.nombreUsuario,
-                        'correo': usuario.correo,
-                        'rol': {
-                            'nombre': rol.nombreRol,
-                            'descripcion': rol.descripcion,
-                        },
-                        'preferencias': {
-                            'idioma': preferencia.idioma,
-                            'pais': preferencia.pais,
-                            'estadoPerfil': preferencia.estadoPerfil
-                        }
-                    },
+                    codigo_respuesta: CODIGOS.LOGIN_OK,
                 });
 
             } else {
                 return respuesta.status(500).json({
-                    message: 'Contraseña incorrecta',
-                    codigo_interno: 4,
-                    userData: {},
+                    codigo_respuesta: CODIGOS.PASSWORD_INCORRECTA,
                 });
             }
         });
 
     } catch(excepcion) {
         return respuesta.status(500).send({
-            message: `Error con la API: ${excepcion}`,
-            codigo_interno: -1,
-            userData: {},
+            codigo_respuesta: CODIGOS.API_ERROR,
+        });
+    }
+};
+
+// Prueba para realizar el unpack de un token.
+exports.unpackToken = async(request, respuesta) => {
+    // POST Request
+    const datos = request.body;
+
+    try {
+        let payload = getTokenData(datos.token);
+
+        respuesta.status(201).json({
+            payload: payload,
+        });
+
+    } catch(excepcion) {
+        return respuesta.status(500).send({
+            codigo_respuesta: CODIGOS.API_ERROR,
+        });
+    }
+};
+
+// Realiza peticiones de preferencias del usuario. Es necesario un token.
+exports.datosUsuario = async(request, respuesta) => {
+    // POST Request.
+    const datos = request.body;
+    const headers = request.headers;
+
+    try {
+        // Se obtiene el payload del token.
+        let payload = getTokenData(headers.token);
+
+        let usuario = await Usuario.findOne({
+            where: {
+                id: payload.usuario
+            },
+            attributes: ['nombreUsuario']
+        });
+
+        if (!usuario) {
+            respuesta.status(404).json({
+                codigo_respuesta: CODIGOS.USUARIO_NO_REGISTRADO,
+            });
+        }
+
+        let preferencia = await Preferencia.findOne({
+            where: {
+                id: payload.preferencia
+            },
+            attributes: ['idioma', 'pais', 'estadoPerfil']
+        });
+
+        if (!preferencia) {
+            respuesta.status(404).json({
+                codigo_respuesta: CODIGOS.USUARIO_SIN_CONFIGURACIONES
+            });
+        }
+
+        respuesta.status(201).json({
+            usuario,
+            preferencia,
+        });
+
+    } catch(excepcion) {
+        return respuesta.status(500).send({
+            codigo_respuesta: CODIGOS.API_ERROR,
         });
     }
 };
