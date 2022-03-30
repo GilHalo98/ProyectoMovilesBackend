@@ -1,8 +1,9 @@
 const jwt = require('jsonwebtoken');
 
 const getToken = (payload) => {
+    // Buffer.from(process.env.Secret, 'base64'),
     return jwt.sign(
-        {data: payload},
+        payload,
         process.env.Secret,
         {expiresIn: '1h'}
     );
@@ -10,9 +11,10 @@ const getToken = (payload) => {
 
 const getTokenData = (token) => {
     let data = null;
+
     jwt.verify(token, process.env.Secret, (error, decoded) => {
         if (error) {
-            console.log('Error al decodificar datos en el token');
+            console.log(`Error al decodificar datos en el token: ${error}`);
         } else {
             data = decoded;
         }
@@ -21,7 +23,7 @@ const getTokenData = (token) => {
     return data;
 }
 
-module.exports  = {
+module.exports = {
     getToken,
     getTokenData
 }

@@ -11,23 +11,20 @@ module.exports = (app) => {
     // Registra un usuario en la db.
     router.post("/registrar/", usuario.registrar);
 
-    // Verifica si un nombre de usuario ya existe en la db.
-    router.get("/verificar/username/", usuario.verificarUserName);
-
-    // Verifica si un correo ya existe en la db.
-    router.get("/verificar/correo/", usuario.verificarCorreo);
-
     // Valida un correo electronico.
-    router.get("/validar/:correo/:codigo", usuario.validarCorreo);
-
-    // Valida un correo e inicia sesion.
-    router.get("/validar/login/:correo/:codigo", usuario.validarCorreoLogin);
+    router.get("/validar/:correo/:codigo/asLogin=:isLogin", usuario.validarCorreo);
 
     // Envia un correo para validar el email.
     router.get("/validar/:correo", usuario.enviarCorreo);
 
     // Hace el login.
     router.post("/login/", usuario.login);
+
+    // Envia los datos de un usuario dado.
+    router.post("/datos/", usuario.datosUsuario);
+
+    // Para hacer pruebas con tokens
+    router.post("/unpackToken/", usuario.unpackToken);
 
     // Ruta general de usaurios.
     app.use(process.env.API_URL + "usuario", router);
