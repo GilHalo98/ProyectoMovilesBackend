@@ -2,6 +2,8 @@
 const bodyParser = require("body-parser");
 const express = require("express");
 const cors = require("cors");
+const { Server } = require("socket.io");
+const http = require('http');
 
 // Importa el ambiente en el que se trabaja.
 require("dotenv").config();
@@ -20,11 +22,25 @@ app.use(bodyParser.urlencoded({extended: false}));
 // Se configura el frontend para recivir datos del backend.
 app.use(cors({origin: "*"}));
 
+// Prueba de sockets.
+app.get('/pruebaSockets', (req, res) => {
+  res.sendFile(__dirname + '/index.html');
+});
+
 // Aqui se agregan las rutas generales.
 require("./routes/UsuarioRoute")(app);
 
-// Respuesta del servidor.
-app.listen(PORT, HOST, (error) => {
+// Instancia un objeto servidor.
+const server = http.createServer(app);
+
+// Se instancia el io para el socket.
+const io = new Server(server);
+
+// Aqui se agregan los eventos que puede manejar el socket.
+require("./eventos/SocketsEventos")(io);
+
+// Escuchamos sobre una IP y Puerto definido e instanciamos el servidor.
+server.listen(PORT, HOST, (error) => {
   if (error) return console.log(`---| Cannot listen on Port: ${PORT}`);
   console.log(`---| Server is listening on: http://${HOST}:${PORT}/`);
 });
