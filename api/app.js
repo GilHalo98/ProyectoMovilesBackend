@@ -22,13 +22,9 @@ app.use(bodyParser.urlencoded({extended: false}));
 // Se configura el frontend para recivir datos del backend.
 app.use(cors({origin: "*"}));
 
-// Prueba de sockets.
-app.get('/pruebaSockets', (req, res) => {
-  res.sendFile(__dirname + '/index.html');
-});
-
 // Aqui se agregan las rutas generales.
 require("./routes/UsuarioRoute")(app);
+require("./routes/ChatRoute")(app)
 
 // Instancia un objeto servidor.
 const server = http.createServer(app);
