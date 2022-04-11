@@ -20,8 +20,13 @@ module.exports = {
       estadoPerfil: {
         type: Sequelize.STRING
       },
+
+      contactos: {
+        type: Sequelize.STRING,
+      },
     });
   },
+
   async down(queryInterface, Sequelize) {
     await queryInterface.dropTable('Preferencias');
   }
