@@ -22,45 +22,10 @@ const jwt = require('jsonwebtoken');
 const { template_chat } = require("../template/chat");
 
 exports.vistaChat = async(request, respuesta) => {
-    // GET Request.
-    const headers = request.headers;
-
     try {
-        // Verificamos que el header tenga un token para validar el usuario.
-        if (!headers.token) {
-            return respuesta.status(511).json({
-                codigo_respuesta: "Token no ingresado",
-            });
-        }
-    
-        // Desencriptamos el payload del token
-        const payload = getTokenData(headers.token);
-    
-        // Verificamos que el payload sea valido.
-        if (!payload) {
-            return respuesta.status(401).json({
-                codigo_respuesta: "token invalido",
-            });
-    
-        }
-
-        // Consultamos la DB para encontrar el username del usuario.
-        let usuario = await Usuario.findOne({
-            where: {
-                id: payload.usuario
-            },
-            attributes: ['nombreUsuario']
-        });
-
-        // Validamos que el usuario exista en la DB.
-        if (!usuario) {
-            respuesta.status(404).json({
-                codigo_respuesta: CODIGOS.USUARIO_NO_REGISTRADO,
-            });
-        }
-
+        // Retorna un html con js y socket.io integrado
         respuesta.status(200).send(
-            template_chat(usuario.nombreUsuario)
+            template_chat()
         );
 
     } catch(excepcion) {
