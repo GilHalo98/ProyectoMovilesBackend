@@ -1,7 +1,8 @@
 const Eventos = require("../utils/EventosSockets");
 const EVENTOS = new Eventos.EventosSockets();
 
-const template_chat = (username) => {
+const template_chat = () => {
+  let username= 'ADMON'
   const htmlTemplat = `
     <!DOCTYPE html>
     <html>
@@ -66,13 +67,22 @@ const template_chat = (username) => {
             window.scrollTo(0, document.body.scrollHeight);
           });
 
-          socket.on('${EVENTOS.USUARIO_DISPONIBLE}', function(usr) {
+          socket.on('${EVENTOS.CLIENTE_DISPONIBLE}', function(usr) {
             var item = document.createElement('li');
             item.textContent = 'Usuario conectado: ' + usr;
             item.style.cssText = 'text-align: center;background-color:#99FC92';
             messages.appendChild(item);
             window.scrollTo(0, document.body.scrollHeight);
           });
+
+          socket.on('${EVENTOS.CLIENTE_TERMINADO}', function(usr) {
+            var item = document.createElement('li');
+            item.textContent = 'Usuario desconectado: ' + usr;
+            item.style.cssText = 'text-align: center;background-color:#ff6060';
+            messages.appendChild(item);
+            window.scrollTo(0, document.body.scrollHeight);
+          });
+
         </script>
       </body>
     </html>
