@@ -1,22 +1,18 @@
 // Modelos de la DB
 const db = require("../models/index");
-const Respuestas = require("../utils/CodigoApp")
+const Respuestas = require("../utils/CodigoApp");
 
-const { getToken, getTokenData } = require("../middleware/jwtConfig")
+const { getToken, getTokenData } = require("../middleware/jwtConfig");
 const { enviarValidacion } = require("../middleware/mailConfig");
 const { generar_codigo } = require("../middleware/util");
 
 const Usuario = db.Usuario;
 const Preferencia = db.Preferencia;
-const Rol = db.Rol;
 
-const CODIGOS = new Respuestas.CodigoApp()
+const CODIGOS = new Respuestas.CodigoApp();
 
 // Para encriptar la contraseña
 const bcrypjs = require("bcryptjs");
-
-// Para generar tokens.
-const jwt = require('jsonwebtoken');
 
 // Registra un usuario en la db
 exports.registrar = async(request, respuesta) => {
@@ -78,6 +74,7 @@ exports.registrar = async(request, respuesta) => {
             'idioma': preferenciaDefault.idioma,
             'pais': preferenciaDefault.pais,
             'estadoPerfil': preferenciaDefault.estadoPerfil,
+            'contactos': '',
         }
 
         // Despues se registra la preferencia en la db.
@@ -156,12 +153,28 @@ exports.validarCorreo = async(request, respuesta) => {
             usuario.correoVerificado = true;
 
             if (datos.isLogin === 'true' || datos.isLogin === '1') {
+                // Consultamos el idioma y region del usuario registrado.
+                let preferencias = await Preferencia.findOne({
+                    where: {
+                        id: usuario.idPreferencia
+                    }
+                });
+
+                // Verificamos que las preferencias existan.
+                if (!preferencias) {
+                    return respuesta.status(404).json({
+                        codigo_respuesta: CODIGOS.USUARIO_SIN_CONFIGURACIONES
+                    });
+                }
+
                 respuesta.setHeader(
                     'token',
                     getToken({
                         'usuario': usuario.id,
                         'rol': usuario.idRol,
-                        'preferencia': usuario.idPreferencia
+                        'preferencia': usuario.idPreferencia,
+                        'idioma': preferencias.idioma,
+                        'pais': preferencias.pais
                     })
                 );
             }
@@ -274,6 +287,20 @@ exports.login = async(request, respuesta) => {
             });
         }
 
+        // Consultamos el idioma y region del usuario registrado.
+        let preferencias = await Preferencia.findOne({
+            where: {
+                id: usuario.idPreferencia
+            }
+        });
+
+        // Verificamos que las preferencias existan.
+        if (!preferencias) {
+            return respuesta.status(404).json({
+                codigo_respuesta: CODIGOS.USUARIO_SIN_CONFIGURACIONES
+            });
+        }
+
         // Verificamos la contraseña.
         bcrypjs.compare(datos.password, usuario.password, function(error, igual) {
             if (igual) {
@@ -282,7 +309,9 @@ exports.login = async(request, respuesta) => {
                     getToken({
                         'usuario': usuario.id,
                         'rol': usuario.idRol,
-                        'preferencia': usuario.idPreferencia
+                        'preferencia': usuario.idPreferencia,
+                        'idioma': preferencias.idioma,
+                        'pais': preferencias.pais
                     })
                 );
 
@@ -314,54 +343,6 @@ exports.unpackToken = async(request, respuesta) => {
 
         respuesta.status(201).json({
             payload: payload,
-        });
-
-    } catch(excepcion) {
-        return respuesta.status(500).send({
-            codigo_respuesta: CODIGOS.API_ERROR,
-        });
-    }
-};
-
-// Realiza peticiones de preferencias del usuario. Es necesario un token.
-exports.datosUsuario = async(request, respuesta) => {
-    // GET Request.
-    const headers = request.headers;
-
-    try {
-        // Se obtiene el payload del token.
-        let payload = getTokenData(headers.token);
-
-        let usuario = await Usuario.findOne({
-            where: {
-                id: payload.usuario
-            },
-            attributes: ['nombreUsuario']
-        });
-
-        if (!usuario) {
-            respuesta.status(404).json({
-                codigo_respuesta: CODIGOS.USUARIO_NO_REGISTRADO,
-            });
-        }
-
-        let preferencia = await Preferencia.findOne({
-            where: {
-                id: payload.preferencia
-            },
-            attributes: ['idioma', 'pais', 'estadoPerfil']
-        });
-
-        if (!preferencia) {
-            respuesta.status(404).json({
-                codigo_respuesta: CODIGOS.USUARIO_SIN_CONFIGURACIONES
-            });
-        }
-
-        respuesta.status(201).json({
-            codigo_respuesta: CODIGOS.DATOS_USUARIO_OK,
-            usuario,
-            preferencia,
         });
 
     } catch(excepcion) {
