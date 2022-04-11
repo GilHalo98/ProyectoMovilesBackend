@@ -7,6 +7,7 @@ module.exports = {
             idioma: 'es',
             pais: 'mx',
             estadoPerfil: '¡Hola, soy nuevo en la app!',
+            contactos: '',
           },
       ])
   },
