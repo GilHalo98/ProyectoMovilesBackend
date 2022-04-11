@@ -10,8 +10,8 @@ module.exports = (app) => {
 
     // router.get("/chat/userToken=:token", chat.vistaChat);
 
-    router.get("/chat/", chat.vistaChat);
+    router.get("/globalChat/", chat.vistaChat);
 
     // Ruta general de usaurios.
-    app.use(process.env.API_URL + "vistas", router);
+    app.use(process.env.API_URL + "debug", router);
 };
