@@ -3,6 +3,7 @@ const EVENTOS = new Eventos.EventosSockets();
 
 const template_chat = () => {
   let username= 'ADMON'
+
   const htmlTemplat = `
     <!DOCTYPE html>
     <html>
