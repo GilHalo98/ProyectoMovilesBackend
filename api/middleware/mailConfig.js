@@ -2,7 +2,7 @@ const nodemailer = require("nodemailer");
 const { template_validacion } = require("../template/validacion");
 
 var transporter = nodemailer.createTransport({
-    service: 'gmail',
+    service: 'Outlook365',
     auth: {
         user: process.env.MAIL_DIR,
         pass: process.env.MAIL_PASS
