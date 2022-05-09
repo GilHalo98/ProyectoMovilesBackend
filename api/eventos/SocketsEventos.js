@@ -1,51 +1,73 @@
+// Modelos de la DB
+const db = require("../models/index");
+const Preferencia = db.Preferencia;
+
 const { getToken, getTokenData } = require("../middleware/jwtConfig");
 
 const Eventos = require("../utils/EventosSockets");
 const EVENTOS = new Eventos.EventosSockets();
 
-const diccionarioUsuarios = {}
+const diccionarioUsuarios = {};
 
 module.exports = (io) => {
   io.on(EVENTOS.CONEXION, (socket) => {
+    const token = socket.handshake.auth.token;
+    const payload = getTokenData(token);
+    diccionarioUsuarios[payload.usuario] = socket.id;
+
     console.log('a user connected');
 
     socket.on(EVENTOS.DESCONEXION, () => {
       console.log('user disconnected');
-    });
-
-    socket.on(EVENTOS.MENSAJE_ENVIADO_PRIVADO, (msg, to) => {
-      console.log('mensaje ' + msg + ' para ' + to);
-    });
-
-    socket.on(EVENTOS.MENSAJE_ENVIADO, (msg) => {
-      console.log('message: ' + msg);
-      socket.broadcast.emit(EVENTOS.MENSAJE_ENVIADO, msg);
-    });
-
-    socket.on(EVENTOS.CLIENTE_DISPONIBLE, (tokenCliente) => {
-      console.log('Cliente disponible');
-      payload = getTokenData(tokenCliente);
-      diccionarioUsuarios[payload.usuario] = socket.id;
-
-      socket.broadcast.emit(
-        EVENTOS.CLIENTE_DISPONIBLE,
-        "cliente " + payload.usuario + " conectado"
-      );
-
-      console.log(diccionarioUsuarios);
-    });
-
-    socket.on(EVENTOS.CLIENTE_TERMINADO, (tokenCliente) => {
-      console.log('Cliente terminado');
-      payload = getTokenData(tokenCliente);
       delete diccionarioUsuarios[payload.usuario];
 
-      socket.broadcast.emit(
-        EVENTOS.CLIENTE_TERMINADO,
-        "cliente " + payload.usuario + " desconectado"
-      );
+      console.log('cliente ' + payload.usuario + ' terminado');
 
-      console.log(diccionarioUsuarios);
+      socket.broadcast.emit(EVENTOS.CLIENTE_TERMINADO, payload.usuario);
+    });
+
+    socket.on(EVENTOS.CLIENTE_DISPONIBLE, () => {
+      console.log('cliente ' + payload.usuario + ' disponible');
+
+      socket.broadcast.emit(EVENTOS.CLIENTE_DISPONIBLE, payload.usuario);
+    });
+
+    socket.on(EVENTOS.MENSAJE_ENVIADO_PRIVADO, (msg, destino) => {
+      console.log('mensaje ' + msg + ' para ' + destino);
+
+      socket.broadcast.to(
+        diccionarioUsuarios[destino]
+      ).emit(EVENTOS.MENSAJE_ENVIADO_PRIVADO, msg);
+    });
+
+    socket.on(EVENTOS.CONSULTA_CONTACTOS, () => {
+      // Se consultan los contactos del usuario.
+      let idsContactos = Preferencia.findOne({
+        where: {
+          id: payload.preferencia
+        },
+        attributes: ['contactos']
+      });
+
+      var contactosDisponibles = [];
+
+      for (const idContacto in idsContactos) {
+        var contactoContectado = diccionarioUsuarios.find(idUsuario => {
+          idContacto === idUsuario
+        });
+
+        if (contactoContectado) {
+          contactosDisponibles.push(idContacto);
+        }
+      }
+
+      console.log(contactosDisponibles);
+    });
+
+    socket.on(EVENTOS.CONSULTA_CLIENTES, () => {
+      console.log('Peticion de consulta de clientes de ' + payload.usuario);
+
+      socket.emit(EVENTOS.CONSULTA_CLIENTES, Object.keys(diccionarioUsuarios));
     });
   });
 };
