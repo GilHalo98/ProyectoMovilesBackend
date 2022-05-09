@@ -25,7 +25,8 @@ app.use(cors({origin: "*"}));
 // Aqui se agregan las rutas generales.
 require("./routes/UsuarioRoute")(app);
 require("./routes/PreferenciasRoute")(app);
-require("./routes/ChatRoute")(app);
+require("./routes/ContactosRoute")(app);
+require("./routes/DebugRoute")(app);
 
 // Instancia un objeto servidor.
 const server = http.createServer(app);
