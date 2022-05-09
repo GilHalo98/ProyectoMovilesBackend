@@ -5,7 +5,7 @@ const getToken = (payload) => {
     return jwt.sign(
         payload,
         process.env.Secret,
-        {expiresIn: '1h'}
+//        {expiresIn: '1h'}
     );
 }
 
