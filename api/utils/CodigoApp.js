@@ -27,6 +27,9 @@ class CodigoApp {
 
     CONTACTO_INEXISTENTE = 19;
     DATOS_CONTACTO_INVALIDO = 20;
+
+    USUARIO_NO_ENCONTRADO = 21;
+    USUARIOS_ENCONTRADOS = 22;
 }
 
 module.exports = {
