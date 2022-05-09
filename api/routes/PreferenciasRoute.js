@@ -8,12 +8,6 @@ module.exports = (app) => {
     // Enrutador de funciones.
     var router = require("express").Router();
 
-    // Agrega un contacto a la lista de contactos.
-    router.post("/contactos/agregar/", preferencia.addContacto);
-
-    // Envia los contactos del usuario dado.
-    router.get("/contactos/", preferencia.contactosUsuario);
-
     // Envia los datos de un usuario dado.
     router.get("/datos/", preferencia.datosUsuario);
 
