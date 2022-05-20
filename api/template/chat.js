@@ -251,9 +251,8 @@ const template_chat = (token, id, usuario, contactos) => {
     `;
 
   return htmlTemplat;
-}
+};
 
-
-module.exports  = {
+module.exports = {
   template_chat
-}
+};
