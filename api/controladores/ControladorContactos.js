@@ -14,7 +14,7 @@ const Preferencia = db.Preferencia;
 const CODIGOS = new Respuestas.CodigoApp();
 
 // Agrega un contacto a un usuario dado.
-exports.addContacto= async(request, respuesta) => {
+exports.addContacto = async(request, respuesta) => {
     // POST Request.
     const headers = request.headers;
     const cuerpo = request.body;
@@ -35,7 +35,7 @@ exports.addContacto= async(request, respuesta) => {
         // se envia un error.
         if (!cuerpo.contacto) {
             respuesta.status(400).json({
-                codigo_respuesta: CODIGOS.DATOS_CONTACTO_INVALIDO,
+                codigo_respuesta: CODIGOS.INFORMACION_INCOMPLETA,
             });
         }
 
@@ -45,8 +45,6 @@ exports.addContacto= async(request, respuesta) => {
                 id: cuerpo.contacto,
             }
         });
-
-        console.log(cuerpo.contacto)
 
         // Si no lo encuentra, envia un error.
         if (!contacto) {
@@ -69,13 +67,160 @@ exports.addContacto= async(request, respuesta) => {
             });
         }
 
-        // Realizamos los cambios.
-        preferencia.contactos = cuerpo.contacto;
+        // Buscamos en los contactos si este ya existe.
+        let contactoEncontrado = preferencia.contactos.find((contacto) => {
+            return parseInt(cuerpo.contacto) === parseInt(contacto);
+        });
+
+        // Almacenamos temporalmente la lista de contactos.
+        let listaContactos = preferencia.contactos
+
+        // Si el contacto no se encuentra en la lista de contactos.
+        if (!contactoEncontrado) {
+            listaContactos.push(cuerpo.contacto);
+        }
 
         // Se guardan los cambios.
+        preferencia.contactos = listaContactos
+
+        // Realizamos la misma operacion con los contactos del usuairo
+        // a agregar.
+
+        // Se cargan las preferencias del contacto.
+        let preferenciaContacto = await Preferencia.findOne({
+            where: {
+                id: contacto.idPreferencia
+            },
+        });
+
+        // Si no existen las preferencias del contacto manda un error.
+        if (!preferenciaContacto) {
+            respuesta.status(404).json({
+                codigo_respuesta: CODIGOS.USUARIO_SIN_CONFIGURACIONES
+            });
+        }
+
+        // Buscamos en los contactos si este ya existe.
+        let usuarioEncontrado = preferenciaContacto.contactos.find((contacto) => {
+            return parseInt(payload.usuario) === parseInt(contacto);
+        });
+
+        // Almacenamos temporalmente la lista de contactos.
+        let listaContactosAux = preferenciaContacto.contactos
+
+        // Si el contacto no se encuentra en la lista de contactos.
+        if (!usuarioEncontrado) {
+            listaContactosAux.push(payload.usuario);
+        }
+
+        // Se guardan los cambios.
+        preferenciaContacto.contactos = listaContactosAux
+
+        // Realizamos los cambios a la DB.
         preferencia.save().then((resultado) => {
-            respuesta.status(201).json({
-                codigo_respuesta: CODIGOS.DATOS_USUARIO_OK,
+            preferenciaContacto.save().then((resultado) => {
+                respuesta.status(201).json({
+                    codigo_respuesta: CODIGOS.DATOS_USUARIO_OK,
+                });
+            });
+        });
+
+    } catch(excepcion) {
+        console.log(excepcion);
+
+        return respuesta.status(500).send({
+            codigo_respuesta: CODIGOS.API_ERROR,
+        });
+    }
+};
+
+// Elimina un contacto de una lista de contactos de un usuario dado.
+exports.deleteContacto = async(request, respuesta) => {
+    // DELETE Request.
+    const headers = request.headers;
+    const cuerpo = request.body;
+    const parametros = request.params;
+
+    try {
+        // Se obtiene el payload del token.
+        let payload = getTokenData(headers.token);
+
+        // En caso de que el token sea invalido.
+        if (!payload) {
+            respuesta.status(401).json({
+                codigo_respuesta: CODIGOS.TOKEN_INVALIDO,
+            });
+        }
+
+        // Verificamos si existen datos en el body, si no es asi
+        // se envia un error.
+        if (!cuerpo.contacto) {
+            respuesta.status(400).json({
+                codigo_respuesta: CODIGOS.INFORMACION_INCOMPLETA,
+            });
+        }
+
+        // Verificamos si el contacto a agregar eliminar.
+        let contacto = await Usuario.findOne({
+            where: {
+                id: cuerpo.contacto,
+            }
+        });
+
+        // Si no lo encuentra, envia un error.
+        if (!contacto) {
+            respuesta.status(404).json({
+                codigo_respuesta: CODIGOS.CONTACTO_INEXISTENTE
+            });
+        }
+
+        // Se cargan las preferencias del usuario.
+        let preferencia = await Preferencia.findOne({
+            where: {
+                id: payload.preferencia
+            },
+        });
+
+        // Si no existen las preferencias del usuario manda un error.
+        if (!preferencia) {
+            respuesta.status(404).json({
+                codigo_respuesta: CODIGOS.USUARIO_SIN_CONFIGURACIONES
+            });
+        }
+
+        // Filtramos el contacto que se desea eliminar de la lista de contactos.
+        preferencia.contactos = preferencia.contactos.filter((contacto) => {
+            return parseInt(cuerpo.contacto) !== parseInt(contacto);
+        });
+
+        // Realizamos la misma operacion con los contactos del usuairo
+        // a agregar.
+
+        // Se cargan las preferencias del contacto.
+        let preferenciaContacto = await Preferencia.findOne({
+            where: {
+                id: contacto.idPreferencia
+            },
+        });
+
+        // Si no existen las preferencias del contacto manda un error.
+        if (!preferenciaContacto) {
+            respuesta.status(404).json({
+                codigo_respuesta: CODIGOS.USUARIO_SIN_CONFIGURACIONES
+            });
+        }
+
+        // Filtramos el contacto que se desea eliminar de la lista de contactos.
+        preferenciaContacto.contactos = preferenciaContacto.contactos.filter((contacto) => {
+            return parseInt(payload.usuario) !== parseInt(contacto);
+        });
+
+        // Realizamos los cambios a la DB.
+        preferencia.save().then((resultado) => {
+            preferenciaContacto.save().then((resultado) => {
+                respuesta.status(201).json({
+                    codigo_respuesta: CODIGOS.DATOS_USUARIO_OK,
+                });
             });
         });
 

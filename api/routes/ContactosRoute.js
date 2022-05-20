@@ -15,7 +15,10 @@ module.exports = (app) => {
     );
 
     // Agrega un contacto a la lista de contactos.
-    router.post("/contactos/agregar/", contactos.addContacto);
+    router.post("/contacto/agregar/", contactos.addContacto);
+
+    // Elimina un contacto de una lista de contactos de un usuario dado.
+    router.delete("/contacto/eliminar", contactos.deleteContacto);
 
     // Envia los contactos del usuario dado.
     router.get("/contactos/", contactos.contactosUsuario);

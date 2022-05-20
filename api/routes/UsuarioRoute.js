@@ -20,9 +20,6 @@ module.exports = (app) => {
     // Hace el login.
     router.post("/login/", usuario.login);
 
-    // Para hacer pruebas con tokens
-    router.post("/unpackToken/", usuario.unpackToken);
-
     // Ruta general de usaurios.
     app.use(process.env.API_URL + "usuario", router);
 };

@@ -74,7 +74,7 @@ exports.registrar = async(request, respuesta) => {
             'idioma': preferenciaDefault.idioma,
             'pais': preferenciaDefault.pais,
             'estadoPerfil': preferenciaDefault.estadoPerfil,
-            'contactos': '',
+            'contactos': [],
         }
 
         // Despues se registra la preferencia en la db.
@@ -324,25 +324,6 @@ exports.login = async(request, respuesta) => {
                     codigo_respuesta: CODIGOS.PASSWORD_INCORRECTA,
                 });
             }
-        });
-
-    } catch(excepcion) {
-        return respuesta.status(500).send({
-            codigo_respuesta: CODIGOS.API_ERROR,
-        });
-    }
-};
-
-// Prueba para realizar el unpack de un token.
-exports.unpackToken = async(request, respuesta) => {
-    // POST Request
-    const datos = request.body;
-
-    try {
-        let payload = getTokenData(datos.token);
-
-        respuesta.status(201).json({
-            payload: payload,
         });
 
     } catch(excepcion) {
