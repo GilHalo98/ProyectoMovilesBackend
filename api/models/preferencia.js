@@ -34,26 +34,9 @@ module.exports = (sequelize, DataTypes) => {
         return [];
       },
 
-      set(idContacto) {
-        let contactos = this.getDataValue('contactos');
-        let lista = []
-
-        if (contactos) {          
-          lista = contactos.split(';');
-
-          let contactoEncontrado = lista.find((contacto) => {
-            return idContacto === contacto;
-          });
-
-          if (!contactoEncontrado) {
-            lista.push(idContacto);
-            this.setDataValue('contactos', lista.join(';'));
-          }
-        } else {
-          lista.push(idContacto);
-          this.setDataValue('contactos', lista.join(';'));
-        }
-      },
+      set(idContactos) {
+        this.setDataValue('contactos', idContactos.join(';'));
+      }
     },
   },
   {
