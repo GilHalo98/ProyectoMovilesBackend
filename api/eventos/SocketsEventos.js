@@ -69,5 +69,29 @@ module.exports = (io) => {
 
       socket.emit(EVENTOS.CONSULTA_CLIENTES, Object.keys(diccionarioUsuarios));
     });
+
+    socket.on(EVENTOS.STREAMING_VIDEO_LLAMADA, (imagen, destino) => {
+      socket.broadcast.to(
+        diccionarioUsuarios[destino]
+      ).emit(EVENTOS.STREAMING_VIDEO_LLAMADA, imagen);
+    });
+
+    socket.on(EVENTOS.PETICION_VIDEO_LLAMADA, (destino) => {
+      socket.broadcast.to(
+        diccionarioUsuarios[destino]
+      ).emit(EVENTOS.PETICION_VIDEO_LLAMADA);
+    });
+
+    socket.on(EVENTOS.VIDEO_LLAMADA_ACEPTADA, (destino) => {
+      socket.broadcast.to(
+        diccionarioUsuarios[destino]
+      ).emit(EVENTOs.VIDEO_LLAMADA_ACEPTADA);
+    });
+
+    socket.on(EVENTOS.VIDEO_LLAMADA_NEGADA, (destino) => {
+      socket.broadcast.to(
+        diccionarioUsuarios[destino]
+      ).emit(EVENTOs.VIDEO_LLAMADA_NEGADA);
+    });
   });
 };
