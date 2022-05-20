@@ -30,6 +30,13 @@ class CodigoApp {
 
     USUARIO_NO_ENCONTRADO = 21;
     USUARIOS_ENCONTRADOS = 22;
+
+    NOMBRE_USUARIO_TOMADO = 23;
+    DATO_EN_DB = 24;
+
+    ROL_INVALIDO = 25;
+
+    USUARIO_ELIMINADO = 26;
 }
 
 module.exports = {
