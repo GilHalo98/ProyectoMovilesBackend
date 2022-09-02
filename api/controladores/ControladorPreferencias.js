@@ -37,7 +37,7 @@ exports.datosUsuario = async(request, respuesta) => {
             where: {
                 id: payload.usuario
             },
-            attributes: ['nombreUsuario']
+            attributes: ['nombreUsuario', 'correo']
         });
 
         // Si el usuario no se encuentra, manda un mensaje.

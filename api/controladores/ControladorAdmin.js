@@ -137,7 +137,7 @@ exports.eliminarUsuario = async(request, respuesta) => {
 
         // Si los datos para realizar la operacion estan incompletos
         // retorna un mensaje.
-        if (!cuerpo.usuarioEliminar) {
+        if (!parametros.usuarioEliminar) {
             return respuesta.status(400).json({
                 codigo_respuesta: CODIGOS.INFORMACION_INCOMPLETA,
             });
@@ -184,7 +184,7 @@ exports.eliminarUsuario = async(request, respuesta) => {
         // Busca el usuario a eliminar.
         let usuarioEliminar = await Usuario.findOne({
             where: {
-                id: cuerpo.usuarioEliminar,
+                id: parametros.usuarioEliminar,
             }
         });
 
@@ -246,7 +246,7 @@ exports.eliminarUsuario = async(request, respuesta) => {
                 // Buscamos por el id del usuario a eliminar en los
                 // contactos y lo filtramos.
                 var nuevoContactos = preferenciaContacto.contactos.filter((idContacto) => {
-                    return parseInt(idContacto) !== parseInt(cuerpo.usuarioEliminar); 
+                    return parseInt(idContacto) !== parseInt(parametros.usuarioEliminar); 
                 });
 
                 // Guardamos los cambios.

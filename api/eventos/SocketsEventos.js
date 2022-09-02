@@ -4,8 +4,13 @@ const Preferencia = db.Preferencia;
 
 const { getToken, getTokenData } = require("../middleware/jwtConfig");
 
+const { generar_codigo_sala } = require("../middleware/util");
+
 const Eventos = require("../utils/EventosSockets");
 const EVENTOS = new Eventos.EventosSockets();
+
+
+const Usuario = db.Usuario;
 
 const diccionarioUsuarios = {};
 
@@ -70,28 +75,52 @@ module.exports = (io) => {
       socket.emit(EVENTOS.CONSULTA_CLIENTES, Object.keys(diccionarioUsuarios));
     });
 
-    socket.on(EVENTOS.STREAMING_VIDEO_LLAMADA, (imagen, destino) => {
+    socket.on(EVENTOS.STREAMING_VIDEO_LLAMADA, (destinatario) => {
+      let remitente = payload.usuario;
+
+      let codigo = generar_codigo_sala(destinatario, remitente);
+
+      // Enviamos el codigo a las dos partes.
+      socket.emit(EVENTOS.STREAMING_VIDEO_LLAMADA, codigo);
+
       socket.broadcast.to(
-        diccionarioUsuarios[destino]
-      ).emit(EVENTOS.STREAMING_VIDEO_LLAMADA, imagen);
+        diccionarioUsuarios[destinatario]
+      ).emit(EVENTOS.STREAMING_VIDEO_LLAMADA, codigo);
     });
 
-    socket.on(EVENTOS.PETICION_VIDEO_LLAMADA, (destino) => {
+    socket.on(EVENTOS.PETICION_VIDEO_LLAMADA, async (destinatario) => {
+      let remitente = payload.usuario;
+
+      let username = await Usuario.findOne({
+        where: {
+          id: payload.usuario,
+        },
+        attributes: ['nombreUsuario']
+      })
+
       socket.broadcast.to(
-        diccionarioUsuarios[destino]
-      ).emit(EVENTOS.PETICION_VIDEO_LLAMADA);
+        diccionarioUsuarios[destinatario]
+      ).emit(
+        EVENTOS.PETICION_VIDEO_LLAMADA,
+        remitente,
+        username.nombreUsuario
+      );
     });
 
-    socket.on(EVENTOS.VIDEO_LLAMADA_ACEPTADA, (destino) => {
+    socket.on(EVENTOS.VIDEO_LLAMADA_ACEPTADA, (destinatario) => {
+      let remitente = payload.usuario;
+
       socket.broadcast.to(
-        diccionarioUsuarios[destino]
-      ).emit(EVENTOs.VIDEO_LLAMADA_ACEPTADA);
+        diccionarioUsuarios[destinatario]
+      ).emit(EVENTOS.VIDEO_LLAMADA_ACEPTADA, remitente);
     });
 
-    socket.on(EVENTOS.VIDEO_LLAMADA_NEGADA, (destino) => {
+    socket.on(EVENTOS.VIDEO_LLAMADA_NEGADA, (destinatario) => {
+      let remitente = payload.usuario;
+
       socket.broadcast.to(
-        diccionarioUsuarios[destino]
-      ).emit(EVENTOs.VIDEO_LLAMADA_NEGADA);
+        diccionarioUsuarios[destinatario]
+      ).emit(EVENTOS.VIDEO_LLAMADA_NEGADA, remitente);
     });
   });
 };

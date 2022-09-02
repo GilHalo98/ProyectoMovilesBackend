@@ -1,0 +1,7 @@
+{
+    "configuration": "cpu=atmega328old",
+    "board": "arduino:avr:nano",
+    "port": "COM11",
+    "programmer": "arduino:avrispmkii",
+    "sketch": "..\\..\\PlatformIO\\Projects\\220618-144052-nanoatmega328\\src\\programa_principal\\programa_principal.ino"
+}

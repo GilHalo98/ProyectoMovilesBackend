@@ -12,7 +12,7 @@ module.exports = (app) => {
     router.get("/usuarios/:email", admin.listarUsuarios);
     router.get("/usuarios/", admin.listarUsuarios);
 
-    router.delete("/usuario/eliminar", admin.eliminarUsuario);
+    router.delete("/usuario/eliminar/:usuarioEliminar", admin.eliminarUsuario);
 
     // Ruta general de usaurios.
     app.use(process.env.API_URL + "admin", router);
