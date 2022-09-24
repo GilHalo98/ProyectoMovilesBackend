@@ -10,6 +10,7 @@ const { generar_codigo } = require("../middleware/util");
 
 const Usuario = db.Usuario;
 const Preferencia = db.Preferencia;
+const Mensaje = db.Mensaje;
 
 const CODIGOS = new Respuestas.CodigoApp();
 
@@ -287,6 +288,38 @@ exports.contactosUsuario = async(request, respuesta) => {
             for (let index in contactos) {
                 let coincidencia = contactos[index];
 
+                // Tambien agregamos el utimo mensaje enviado.
+
+                // Buscamos los mensajes que pertenescan al
+                // remitente y el destinatario.
+                const mensajes_enviados = await Mensaje.findAll({
+                    where: {
+                        idRemitente: payload.usuario,
+                        idDestinatario: coincidencia.id,
+                    }
+                });
+
+                const mensaje_recividos = await Mensaje.findAll({
+                    where: {
+                        idDestinatario: payload.usuario,
+                        idRemitente: coincidencia.id,
+                    }
+                });
+
+                // Combinamos las dos listas de mensajes enviados y recividos.
+                const mensajes = mensajes_enviados.concat(mensaje_recividos);
+
+                // Los organizamos por fechas de envios.
+                mensajes.sort((date1, date2) => {
+                        return new Date(date1.fecha) - new Date(date2.fecha);
+                    }
+                );
+
+                if (mensajes.length == 0) {
+                    coincidencia.dataValues.ultimoMensaje = "";
+                } else {
+                    coincidencia.dataValues.ultimoMensaje = mensajes[mensajes.length - 1].contenido;
+                }
                 coincidencia.dataValues.tipo = 1;
             }
 
@@ -371,19 +404,23 @@ exports.buscarUsuario = async(request, respuesta) => {
                 });
             }
 
-            // Por ultimo buscamos los contactos que tengan una
-            // coincidencia con el correo electronico dado.
-            contactos = await Usuario.findAll({
-                where: {
-                    id: {
-                        [Op.or]: preferencia.contactos
+            // Si el usuario tiene un contacto agregado, minimo, entonces filtra
+            // los contactos en la lista de contactos.
+            if (preferencia.contactos.length > 0) {
+                // Por ultimo buscamos los contactos que tengan una
+                // coincidencia con el correo electronico dado.
+                contactos = await Usuario.findAll({
+                    where: {
+                        id: {
+                            [Op.or]: preferencia.contactos
+                        },
+                        correo: {
+                            [Op.like]: `%${parametros.email}%`,
+                        }
                     },
-                    correo: {
-                        [Op.like]: `%${parametros.email}%`,
-                    }
-                },
-                attributes: ['id', 'nombreUsuario']
-            });
+                    attributes: ['id', 'nombreUsuario']
+                });
+            }
 
             // Buscamos los usuarios con coincidencia del email y se
             // excluye el usuario que realiza la peticion y los
