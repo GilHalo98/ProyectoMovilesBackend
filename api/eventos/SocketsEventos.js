@@ -1,9 +1,9 @@
 // Modelos de la DB
 const db = require("../models/index");
 const Preferencia = db.Preferencia;
+const Mensaje = db.Mensaje;
 
 const { getToken, getTokenData } = require("../middleware/jwtConfig");
-
 const { generar_codigo_sala } = require("../middleware/util");
 
 const Eventos = require("../utils/EventosSockets");
@@ -38,7 +38,25 @@ module.exports = (io) => {
     });
 
     socket.on(EVENTOS.MENSAJE_ENVIADO_PRIVADO, (msg, destino) => {
-      console.log('mensaje ' + msg + ' para ' + destino);
+      console.log(
+        'mensaje ' + msg
+        + ' de ' + payload.usuario
+        + ' para ' + destino
+      );
+
+      // Fecha actual.
+      const fecha = (new Date()).toISOString();
+
+      // El mensaje se agrega a la db.
+      const mensaje = {
+        'contenido': msg,
+        'fecha': fecha,
+        'idRemitente': payload.usuario,
+        'idDestinatario': destino
+      }
+
+      // Despues se registra la preferencia en la db.
+      Mensaje.create(mensaje)
 
       socket.broadcast.to(
         diccionarioUsuarios[destino]
