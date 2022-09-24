@@ -10,6 +10,7 @@ Usuario
 idUsuario PK  # ID del usuario
 nombreUsuario str UNIQUE  # Nombre del usuario
 correo str UNIQUE  # Correo Electronico del usuario
+password str  # Contraseña cifrada del usuario
 codigoVerificacion int  # Codigo de verificacion de correo
 correoVerificado bool  # Indica si el correo esta verificado
 idRol FK >- Rol.idRol  # Rol asignado al usuario
@@ -27,6 +28,15 @@ idPreferencia PK  # ID de preferencia
 idioma str  # Idioma de la interfaz.
 pais str  # Pais del usuario
 estadoPerfil str  # Estado del perfil, un texto descriptivo
+contactos FK >- Usuario.idUsuario  # Lista de contactos
+
+Mensaje
+---
+idMensaje PK  # ID del mensaje
+contenido str  # Contenido del mensaje
+fecha date  # Fecha del envio del mensaje
+idRemitente FK >- Usuario.idUsuario  # ID del remitente
+idDestinatario FK -< Usuario.idUsuario  # ID del Destinatario
 
 ---
 
