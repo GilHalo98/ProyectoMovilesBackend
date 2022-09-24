@@ -37,6 +37,8 @@ class CodigoApp {
     ROL_INVALIDO = 25;
 
     USUARIO_ELIMINADO = 26;
+
+    HISTORIAL_MENSAJES_ENCONTRADOS = 27;
 }
 
 module.exports = {
