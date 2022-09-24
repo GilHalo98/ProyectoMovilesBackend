@@ -28,6 +28,7 @@ require("./routes/PreferenciasRoute")(app);
 require("./routes/ContactosRoute")(app);
 require("./routes/DebugRoute")(app);
 require("./routes/AdminRoute")(app);
+require("./routes/MensajeRoute")(app);
 
 // Instancia un objeto servidor.
 const server = http.createServer(app);
